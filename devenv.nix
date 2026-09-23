@@ -7,14 +7,24 @@
 }:
 let
 
-  commonBuildInput = with pkgs; [
+  runtimeLibs = with pkgs; [
     stdenv.cc.cc.lib
+    libGL
     libxkbcommon
-    systemd
+    wayland
+    udev
     libinput
     mesa
     fontconfig
     freetype
+    libX11
+    libXcursor
+    libXext
+    libXi
+    libXrandr
+    libXScrnSaver
+    libXxf86vm
+    systemd
   ];
 
   slintViewerLatest = pkgs.stdenvNoCC.mkDerivation {
@@ -27,7 +37,26 @@ let
     };
 
     nativeBuildInputs = [ pkgs.autoPatchelfHook ];
-    buildInputs = commonBuildInput;
+    # buildInputs = commonBuildInput;
+    buildInputs = with pkgs; [
+      stdenv.cc.cc.lib
+      libGL
+      libxkbcommon
+      wayland
+      udev
+      libinput
+      mesa
+      fontconfig
+      freetype
+      libX11
+      libXcursor
+      libXext
+      libXi
+      libXrandr
+      libXScrnSaver
+      libXxf86vm
+
+    ];
     installPhase = ''
       mkdir -p $out/bin
       cp slint-viewer $out/bin/slint-viewer
@@ -44,7 +73,7 @@ let
     };
 
     nativeBuildInputs = [ pkgs.autoPatchelfHook ];
-    buildInputs = commonBuildInput;
+    buildInputs = runtimeLibs;
 
     installPhase = ''
       mkdir -p $out/bin
@@ -56,19 +85,19 @@ in
 {
   env.GREET = "devenv";
 
-  packages = with pkgs; [
-    git
-    binutils
-    pkg-config
-    libX11
-    libxcb
+  packages =
+    with pkgs;
+    [
+      git
+      binutils
+      pkg-config
+      libX11
+      libxcb
 
-    libxkbcommon
-    libinput
-    mesa
-    slintLspLatest
-    slintViewerLatest
-  ];
+      slintLspLatest
+      slintViewerLatest
+    ]
+    ++ runtimeLibs;
 
   languages.rust = {
     enable = true;
@@ -98,6 +127,7 @@ in
 
   enterShell = ''
     check
+    export LD_LIBRARY_PATH="${lib.makeLibraryPath runtimeLibs}:$LD_LIBRARY_PATH"
   '';
 
 }
